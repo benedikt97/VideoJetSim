@@ -2,6 +2,8 @@
 
 import socket;
 import sys;
+import time;
+import os;
 from datetime import datetime;
 
 
@@ -16,22 +18,43 @@ def ownip():
     print("Your IP is ", own)
     return own
 
+def clearTerm():
+    os.system('clear')
+
 def printVJtext(data):
-    print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-    print("        VJ Text Received at PORT", PORT, "        ")
-    print("         ",datetime.now(),"         ")
-    print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-    stri = data.replace(b'\r', b'\x43'b'\x52')
-    stri = stri.replace(b'\x18', b'\x43'b'\x4C'b'\x52'b'\x20')
-    stri = stri.replace(b'\x00', b'\n'b'\x20'b'\x20'b'\x20'b'\x20')
+    print(data.hex())
+    print(" ________________________________________________________")
+    stri = data.replace(b'\r', b'\x43'b'\x52')                          # CR
+    stri = stri.replace(b'\x18', b'\x43'b'\x4C'b'\x52'b'\x20')          # 'CLR' SP
+    stri = stri.replace(b'\x00', b'\n'b'\x20'b'\x20'b'\x20'b'\x20')     # CR SP SP SP SP
     stri =stri.decode('UTF-8')
     print(stri)
 
-#def replyVJ(data):
-    #If data.find
+
+def printHeader():
+    print(" ________________________________________________________")
+    print("                VJ Text Received at PORT", PORT, "        ")
+    print("               ",datetime.now(),"         ")
+    print(" ________________________________________________________")
+
+def printMain():
+    print(" ________________________________________________________")
+    print("|        VideoJet TCP Printer Simulation / HeuserB       |") 
+    print("|________________________________________________________|",)
+    print("|            IP Adress:", HOST,":", PORT,"            |")
+    print("|________________________________________________________|")
+    print("")
+
+
+def replyVJ(data):
+    if data.find(b'\x18'):
+        print ("Buffer Cleared")
+
+
+
+
 
 def main():
-    print("...waiting for Connection on ", HOST, " at Port: ", PORT)
     while True:
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as conn:
@@ -39,16 +62,27 @@ def main():
                 conn.bind((HOST, PORT))
                 conn.listen()
                 conn, addr = conn.accept()
+                clearTerm()
+                printMain()
+                print("Not Connected")
                 with conn:
-                    print("Connected by: ", addr)
                     while True:     
                         data = conn.recv(1024)
                         if not data: 
-                            raise ValueError('Connection Closed')
+                            raise ValueError('Connection Closed by Remote Partner')
                         #replyVJ(data)
+                        clearTerm()
+                        printMain()
+                        printHeader()
                         printVJtext(data)
         except Exception as e:
-            print(e)
+            clearTerm()
+            printMain()
+            print(" ________________________________________________________")
+            print("               ",datetime.now(),"         ")
+            print("Error:", e, "        ")
+            print(" ________________________________________________________")
+            time.sleep(1)
             
 
 
@@ -56,9 +90,11 @@ def main():
 
 
 if __name__ == "__main__": 
-    print("Welcome to VideoJet TCP Printer Simulation / HeuserB") 
+    
     HOST = '172.16.45.100' #ownip()
     PORT = int(sys.argv[1])
+    clearTerm()
+    printMain()
     main()
             
                         
